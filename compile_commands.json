@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "file": "main.cpp",
+    "arguments": [
+      "g++",
+      "main.cpp",
+      "-o",
+      "app",
+      "-I/opt/homebrew/include",
+      "-std=c++11",
+      "-DGL_SILENCE_DEPRECATION",
+      "-framework"
+    ],
+    "directory": "/Users/ojasprabhune/Documents/projects/black_hole",
+    "output": "app"
+  }
+]

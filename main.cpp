@@ -1,6 +1,18 @@
 #include <GLFW/glfw3.h>
-#include <cmath> // Needed for sin and cos
-#include <iostream>
+#include <cmath>
+
+struct Engine {
+  GLFWwindow *window;
+  int WIDTH = 800;
+  int HEIGHT = 600;
+  float width = 1e11;
+  float heigh = 7.5e10;
+
+  Engine() {
+    if (!glfwInit()) {
+    }
+  }
+};
 
 int main() {
   if (!glfwInit())
