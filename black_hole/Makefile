@@ -1,13 +1,8 @@
-CXX = g++
-CXXFLAGS = -I/opt/homebrew/include -std=c++11 -DGL_SILENCE_DEPRECATION
-LDFLAGS = -L/opt/homebrew/lib -lglfw -framework OpenGL
-TARGET = app
-SRC = main.cpp
+all:
+	g++ src/main.cpp -o a.out \
+	-I/opt/homebrew/include \
+	-L/opt/homebrew/lib \
+	-lglew -lglfw -framework OpenGL
 
-all: $(TARGET)
-
-$(TARGET): $(SRC)
-	$(CXX) $(SRC) -o $(TARGET) $(CXXFLAGS) $(LDFLAGS)
-
-clean:
-	rm -f $(TARGET)
+run: all
+	./a.out
