@@ -1,9 +1,54 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <OpenGL/gl.h>
+#include <alloca.h>
 #include <iostream>
 
 #define GL_SILENCE_DEPRECATION
+
+static unsigned int compileShader(unsigned int type, const std::string source) {
+
+  unsigned int id = glCreateShader(type);
+  const char *src = source.c_str();
+  glShaderSource(id, 1, &src, nullptr);
+  glCompileShader(id);
+
+  int result;
+  glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+  if (result == GL_FALSE) {
+    int length;
+    glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+    char *message = (char *)alloca(length * sizeof(char));
+    glGetShaderInfoLog(id, length, &length, message);
+    std::cout << "failed to compile "
+              << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader"
+              << std::endl;
+    std::cout << message << std::endl;
+    glDeleteShader(id);
+
+    return 0;
+  }
+
+  return id;
+}
+
+static unsigned int createShader(const std::string &vertexShader,
+                                 const std::string &fragmentShader) {
+
+  unsigned int program = glCreateProgram();
+  unsigned int vs = compileShader(GL_VERTEX_SHADER, vertexShader);
+  unsigned int fs = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+  glAttachShader(program, vs);
+  glAttachShader(program, fs);
+  glLinkProgram(program);
+  glValidateProgram(program);
+
+  glDeleteShader(vs);
+  glDeleteShader(fs);
+
+  return program;
+}
 
 int main(void) {
   GLFWwindow *window;
@@ -11,6 +56,11 @@ int main(void) {
   // initialize library
   if (!glfwInit())
     return -1;
+
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required for Mac
 
   // create a windowed mode window and its OpenGL context
   window = glfwCreateWindow(640, 480, "black hole sim", NULL, NULL);
@@ -29,13 +79,16 @@ int main(void) {
     std::cout << "GLEW error!" << std::endl;
   }
 
-  std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
-
   float positions[6] = {
       -0.5f, -0.5f, // vertex 1
       0.0f,  0.5f,  // vertex 2
       0.5f,  -0.5f  // vertex 3
   };
+
+  // vertex array object
+  unsigned int vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
 
   unsigned int buffer;
   glGenBuffers(1, &buffer);
@@ -45,13 +98,39 @@ int main(void) {
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 
+  std::string vertexShader = R"(
+    #version 330 core
+
+    layout(location = 0) in vec4 position;
+    
+    void main() {
+      gl_Position = position;
+    }
+  )";
+
+  std::string fragmentShader = R"(
+    #version 330 core
+
+    layout(location = 0) out vec4 color;
+    
+    void main() {
+      color = vec4(1.0, 0.0, 0.0, 1.0);
+    }
+  )";
+
+  unsigned int shader = createShader(vertexShader, fragmentShader);
+  glUseProgram(shader);
+
+  std::cout << "Vendor:   " << glGetString(GL_VENDOR) << std::endl;
+  std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+  std::cout << "Version:  " << glGetString(GL_VERSION) << std::endl;
+
   // loop until the user closes the window
   while (!glfwWindowShouldClose(window)) {
     // render here
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // draw a triangle from the 3 vertices
-    glDrawArrays(GL_CIRCULAR_CCW_ARC_TO_NV, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // swap front and back buffers
     glfwSwapBuffers(window);
